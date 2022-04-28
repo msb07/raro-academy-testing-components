@@ -1,5 +1,5 @@
 import axios from "axios";
-import { FormEvent, useCallback, useMemo } from "react";
+import { FormEvent, useCallback, useMemo, useState } from "react";
 import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import { campoObrigatorio } from "../../helpers/validators/campoObrigatorio";
@@ -8,49 +8,63 @@ import { senhaValida } from "../../helpers/validators/senhaValida";
 import { useValidatedField } from "../../hooks/useValidatedField";
 
 export const Cadastro = () => {
-  const nome = useValidatedField(campoObrigatorio('Nome'));
-  const email = useValidatedField(emailValido('E-mail'));
-  const codigoAcesso = useValidatedField(campoObrigatorio('Codigo Acesso'));
-  const senha = useValidatedField(senhaValida('Senha'));
-  const validaConfirmacaoSenha = useCallback((value: string) => {
-    if (value !== senha.value) {
-      return ['Senhas não conferem'];
-    }
+  const [sucesso, setSucesso] = useState("");
+  const nome = useValidatedField(campoObrigatorio("Nome"));
+  const email = useValidatedField(emailValido("E-mail"));
+  const codigoAcesso = useValidatedField(campoObrigatorio("Codigo Acesso"));
+  const senha = useValidatedField(senhaValida("Senha"));
+  const validaConfirmacaoSenha = useCallback(
+    (value: string) => {
+      if (value !== senha.value) {
+        return ["Senhas não conferem"];
+      }
 
-    return [];
-
-  }, [senha.value]);
+      return [];
+    },
+    [senha.value]
+  );
   const confirmacaoSenha = useValidatedField(validaConfirmacaoSenha);
 
-  const formValido = useMemo(() =>
-    nome.isValid &&
-    email.isValid &&
-    codigoAcesso.isValid &&
-    senha.isValid &&
-    confirmacaoSenha.isValid
-  , [codigoAcesso.isValid, confirmacaoSenha.isValid, email.isValid, nome.isValid, senha.isValid]);
+  const formValido = useMemo(
+    () =>
+      nome.isValid &&
+      email.isValid &&
+      codigoAcesso.isValid &&
+      senha.isValid &&
+      confirmacaoSenha.isValid,
+    [
+      codigoAcesso.isValid,
+      confirmacaoSenha.isValid,
+      email.isValid,
+      nome.isValid,
+      senha.isValid,
+    ]
+  );
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     const usuario = {
       nome: nome.value,
       email: email.value,
       senha: senha.value,
-      codigoAcesso: codigoAcesso.value
+      codigoAcesso: codigoAcesso.value,
     };
 
-    await axios.post(
-      'https://3.221.159.196:3320/auth/login',
-      usuario
-    );
-  }
+    try {
+      await axios.post("https://3.221.159.196:3320/auth/login", usuario);
+      setSucesso("Usuario cadastrado com sucesso");
+    } catch (error) {
+      console.log("first");
+      // throw new Error("msg");
+      // return {};
+      throw error;
+    }
+  };
 
   return (
     <div className="min-h-full flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-2xl sm:rounded-lg sm:px-10">
-
           <form onSubmit={onSubmit}>
             <div className="mb-5">
               <Input
@@ -101,7 +115,7 @@ export const Cadastro = () => {
                 {...codigoAcesso}
               />
             </div>
-
+            <span className="font-small text-green-600">{sucesso} </span>
             <Button type="submit" disabled={!formValido}>
               Cadastrar
             </Button>
